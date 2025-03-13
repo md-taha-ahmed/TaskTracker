@@ -4,11 +4,13 @@ import java.time.LocalDateTime;
 
 
 public class Task {
-    private final int id;
+    private  int id;
     private String description;
     private Status status;
-    private final LocalDateTime createdAt;
+    private  LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    //Jackson needs a no-argument construct to call it while Deserialization is happening
+    public Task() {}
     public Task(int id, String description, Status status){
     this.id=id;
     this.description=description;
