@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,24 +20,16 @@ public class TaskService {
     public static Boolean saveTask(Task task) {
         try {
             File file = new File(FILE_PATH);
-            // Ensure the folder exists
-            file.getParentFile().mkdirs();
+            file.getParentFile().mkdirs(); // Ensure folder exists
 
-            List<Task> tasks;
-            if (file.exists() && file.length() > 0) { // Check if file exists AND is not empty
-                try {
-                    tasks = new ArrayList<>(Arrays.asList(objectMapper.readValue(file, Task[].class)));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    tasks = new ArrayList<>(); // Fallback to an empty list if JSON is invalid
-                }
-            } else {
-                tasks = new ArrayList<>(); // If file does not exist OR is empty, create an empty list
-            }
+            List<Task> tasks = loadTasks("all");
+            if (tasks == null) tasks = new ArrayList<>();
+
+            // Assign a new ID
+            task.setId(tasks.isEmpty() ? 1 : tasks.get(tasks.size() - 1).getId() + 1);
 
             tasks.add(task); // Add the new task
-
-            objectMapper.writeValue(file, tasks); // Save updated tasks list
+            objectMapper.writeValue(file, tasks);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -66,8 +57,8 @@ public class TaskService {
                     if (task.getStatus() == Status.PENDING) {
                         resultTasks.add(task);
                     }
-                    return resultTasks;
                 }
+                return resultTasks;
             } else if (Objects.equals(taskStatus, "in-progress")) {
                 for (Task task : tasks) {
                     if (task.getStatus() == Status.IN_PROGRESS) {
@@ -142,8 +133,17 @@ public class TaskService {
         try {
             File file = new File(FILE_PATH);
             if (!file.exists()) return false;
+
             List<Task> tasks = new ArrayList<>(List.of(objectMapper.readValue(file, Task[].class)));
-            tasks.removeIf(task -> task.getId() == id);
+
+            boolean removed = tasks.removeIf(task -> task.getId() == id);
+            if (!removed) return false; // Task with given ID was not found
+
+            // Reassign IDs to maintain a continuous sequence
+            for (int i = 0; i < tasks.size(); i++) {
+                tasks.get(i).setId(i + 1);
+            }
+
             objectMapper.writeValue(file, tasks);
             return true;
         } catch (IOException e) {
@@ -151,9 +151,10 @@ public class TaskService {
         }
     }
 
+
     public static int getLastId() {
         List<Task> tasks = loadTasks("all");
         assert tasks != null;
-        return tasks.isEmpty() ? 1 : tasks.getLast().getId();
+        return tasks.isEmpty() ? 0 : tasks.getLast().getId();
     }
 }
