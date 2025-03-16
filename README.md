@@ -75,7 +75,4 @@ Tasks are stored in a JSON file located at:
 ```
 ~/task-tracker/tasks.json
 ```
-
-## License
-This project is open-source and available for personal or commercial use.
-
+project ID: https://roadmap.sh/projects/task-tracker
